@@ -29,6 +29,9 @@ services:
             retries: 10
             start_period: 10s
 
+    # http://localhost:3000/
+    # U: admin
+    # P: admin
     grafana:
         container_name: grafana
         image: grafana/grafana:master
