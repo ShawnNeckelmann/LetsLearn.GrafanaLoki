@@ -1,12 +1,35 @@
 using Serilog;
 using Serilog.Debugging;
+using Serilog.Formatting.Compact;
+using Serilog.Sinks.Grafana.Loki;
 
 SelfLog.Enable(Console.Error);
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Host
     .ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders())
-    .UseSerilog((context, configuration) => { configuration.ReadFrom.Configuration(context.Configuration); });
+    .UseSerilog((context, configuration) =>
+    {
+        //configuration.ReadFrom.Configuration(context.Configuration);
+
+        configuration
+            .Enrich.WithProperty("Application", context.HostingEnvironment.ApplicationName)
+            .Enrich.WithProperty("Environment", context.HostingEnvironment.EnvironmentName)
+            .WriteTo.Console(new RenderedCompactJsonFormatter())
+            .WriteTo.GrafanaLoki("http://loki:3100", new List<LokiLabel>()
+            {
+                new()
+                {
+                    Key = "Application",
+                    Value = context.HostingEnvironment.ApplicationName
+                },
+                new()
+                {
+                    Key = "Environment",
+                    Value = context.HostingEnvironment.EnvironmentName
+                }
+            });
+    });
 
 // Add services to the container.
 
