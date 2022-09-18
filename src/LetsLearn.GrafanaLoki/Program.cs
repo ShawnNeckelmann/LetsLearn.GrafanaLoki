@@ -13,8 +13,6 @@ builder.Host
         //configuration.ReadFrom.Configuration(context.Configuration);
 
         configuration
-            .Enrich.WithProperty("Application", context.HostingEnvironment.ApplicationName)
-            .Enrich.WithProperty("Environment", context.HostingEnvironment.EnvironmentName)
             .WriteTo.Console(new RenderedCompactJsonFormatter())
             .WriteTo.GrafanaLoki("http://loki:3100", new List<LokiLabel>()
             {
@@ -40,7 +38,13 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-app.UseSerilogRequestLogging();
+app.UseSerilogRequestLogging(options =>
+{
+    options.EnrichDiagnosticContext = (context, httpContext) =>
+    {
+        context.Set("Method", httpContext.Request.Method);
+    };
+});
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
